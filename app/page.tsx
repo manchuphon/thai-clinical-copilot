@@ -1,6 +1,24 @@
 "use client"
+
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import {
+  AlertTriangle,
+  ArrowRight,
+  CheckCircle,
+  FileAudio,
+  Loader2,
+  MessageSquare,
+  Sparkles,
+  Stethoscope,
+  Upload,
+} from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
+
+const processingSteps = ["อัปโหลดไฟล์เสียง", "ถอดเสียงด้วย AI", "ตรวจสอบ transcript", "พร้อมสร้าง SOAP note"]
 
 export default function UploadPage() {
   const router = useRouter()
@@ -8,6 +26,7 @@ export default function UploadPage() {
   const [loading, setLoading] = useState(false)
   const [transcript, setTranscript] = useState("")
   const [error, setError] = useState("")
+  const [isDragOver, setIsDragOver] = useState(false)
 
   async function handleTranscribe() {
     if (!file) return
@@ -18,7 +37,7 @@ export default function UploadPage() {
       formData.append("audio", file)
       const res = await fetch("/api/transcribe", { method: "POST", body: formData })
       const data = await res.json()
-      if (data.error) throw new Error(data.error)
+      if (!res.ok || data.error) throw new Error(data.error || "Transcription failed")
       setTranscript(data.transcript)
     } catch (e: any) {
       setError(e.message)
@@ -30,6 +49,7 @@ export default function UploadPage() {
   async function handleGenerateSOAP() {
     if (!transcript) return
     setLoading(true)
+    setError("")
     try {
       const res = await fetch("/api/generate-soap", {
         method: "POST",
@@ -37,6 +57,7 @@ export default function UploadPage() {
         body: JSON.stringify({ transcript }),
       })
       const data = await res.json()
+      if (!res.ok || data.error) throw new Error(data.error || "SOAP generation failed")
       localStorage.setItem("soapResult", JSON.stringify(data))
       router.push("/review")
     } catch (e: any) {
@@ -46,63 +67,158 @@ export default function UploadPage() {
     }
   }
 
+  function selectFile(nextFile?: File) {
+    setError("")
+    setTranscript("")
+    setFile(nextFile || null)
+  }
+
+  const progress = transcript ? 100 : loading ? 60 : file ? 25 : 0
+
   return (
-    <main className="max-w-2xl mx-auto px-4 py-10">
-      <div className="mb-8">
-        <span className="text-xs font-medium text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
-          30-Baht Edition
-        </span>
-        <h1 className="mt-3 text-2xl font-semibold text-gray-900">
-          Thai Clinical Copilot
-        </h1>
-        <p className="mt-1 text-sm text-gray-500">
-          อัปโหลดเสียงบทสนทนา → AI สร้าง SOAP Note + ICD-10
-        </p>
-      </div>
-
-      {/* Upload */}
-      <div className="bg-white border border-gray-200 rounded-xl p-6 mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          อัปโหลดไฟล์เสียง (MP3 / WAV / M4A)
-        </label>
-        <input
-          type="file"
-          accept="audio/*"
-          onChange={(e) => setFile(e.target.files?.[0] || null)}
-          className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-        />
-        {file && <p className="mt-2 text-xs text-gray-400">✓ {file.name}</p>}
-        <button
-          onClick={handleTranscribe}
-          disabled={!file || loading}
-          className="mt-4 w-full py-2.5 px-4 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          {loading && !transcript ? "กำลัง Transcribe..." : "Transcribe เสียง"}
-        </button>
-      </div>
-
-      {/* Transcript */}
-      {transcript && (
-        <div className="bg-white border border-gray-200 rounded-xl p-6 mb-4">
-          <h2 className="text-sm font-medium text-gray-700 mb-3">Transcript</h2>
-          <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
-            {transcript}
+    <div className="min-h-screen bg-background">
+      <header className="border-b bg-card">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center gap-3">
+            <div className="rounded-xl bg-primary/10 p-2">
+              <Stethoscope className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-foreground">Thai Ambient Clinical Copilot</h1>
+              <p className="text-sm text-muted-foreground">30-Baht Edition</p>
+            </div>
+            <Badge variant="secondary" className="ml-auto border-emerald-200 bg-emerald-100 text-emerald-700">
+              NHSO Compatible
+            </Badge>
           </div>
-          <button
-            onClick={handleGenerateSOAP}
-            disabled={loading}
-            className="mt-4 w-full py-2.5 px-4 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-40"
-          >
-            {loading ? "กำลังสร้าง SOAP Note..." : "สร้าง SOAP Note + ICD-10 →"}
-          </button>
         </div>
-      )}
+      </header>
 
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-700">
-          {error}
+      <main className="container mx-auto px-6 py-8">
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card className="rounded-2xl border shadow-lg">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Upload className="h-5 w-5 text-primary" />
+                <CardTitle>Audio Upload</CardTitle>
+              </div>
+              <CardDescription>อัปโหลดไฟล์เสียงการสนทนา MP3, WAV หรือ M4A</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <label
+                onDragOver={(event) => {
+                  event.preventDefault()
+                  setIsDragOver(true)
+                }}
+                onDragLeave={() => setIsDragOver(false)}
+                onDrop={(event) => {
+                  event.preventDefault()
+                  setIsDragOver(false)
+                  selectFile(event.dataTransfer.files?.[0])
+                }}
+                className={`block cursor-pointer rounded-xl border-2 border-dashed p-8 text-center transition-all ${
+                  isDragOver
+                    ? "border-primary bg-primary/5"
+                    : file
+                      ? "border-emerald-300 bg-emerald-50"
+                      : "border-border hover:border-primary/50 hover:bg-muted/50"
+                }`}
+              >
+                <input type="file" accept="audio/*" className="sr-only" onChange={(event) => selectFile(event.target.files?.[0])} />
+                {file ? (
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="rounded-full bg-emerald-100 p-3">
+                      <FileAudio className="h-8 w-8 text-emerald-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">{file.name}</p>
+                      <p className="text-sm text-muted-foreground">พร้อมถอดเสียง</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="rounded-full bg-muted p-3">
+                      <Upload className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">ลากไฟล์เสียงมาวางที่นี่</p>
+                      <p className="text-sm text-muted-foreground">หรือคลิกเพื่อเลือกไฟล์</p>
+                    </div>
+                  </div>
+                )}
+              </label>
+
+              <Button onClick={handleTranscribe} className="w-full" size="lg" disabled={!file || loading}>
+                {loading && !transcript ? (
+                  <>
+                    <Loader2 className="animate-spin" />
+                    กำลัง Transcribe...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles />
+                    Transcribe เสียง
+                  </>
+                )}
+              </Button>
+
+              {(file || loading || transcript) && (
+                <div className="space-y-4">
+                  <Progress value={progress} />
+                  <div className="space-y-2">
+                    {processingSteps.map((step, index) => {
+                      const done = progress >= ((index + 1) / processingSteps.length) * 100
+                      return (
+                        <div key={step} className={`flex items-center gap-3 text-sm ${done ? "text-foreground" : "text-muted-foreground"}`}>
+                          {done ? <CheckCircle className="h-4 w-4 text-emerald-500" /> : <div className="h-4 w-4 rounded-full border-2 border-muted" />}
+                          <span>{step}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-2xl border shadow-lg">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <MessageSquare className="h-5 w-5 text-primary" />
+                <CardTitle>Transcript Preview</CardTitle>
+              </div>
+              <CardDescription>ผลถอดเสียงที่จะส่งต่อให้ AI สร้าง SOAP Note</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {transcript ? (
+                <>
+                  <div className="max-h-[360px] overflow-auto rounded-xl bg-muted p-4 text-sm leading-relaxed text-foreground whitespace-pre-wrap">
+                    {transcript}
+                  </div>
+                  <Button onClick={handleGenerateSOAP} disabled={loading} className="w-full" size="lg">
+                    {loading ? <Loader2 className="animate-spin" /> : <ArrowRight />}
+                    สร้าง SOAP Note + ICD-10
+                  </Button>
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="mb-4 rounded-full bg-muted p-4">
+                    <MessageSquare className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <p className="text-muted-foreground">อัปโหลดและถอดเสียงก่อน เพื่อดู transcript</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
-      )}
-    </main>
+
+        {error && <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
+
+        <div className="mt-8 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+          <AlertTriangle className="h-4 w-4" />
+          <span>AI-generated output must be reviewed and signed off by a clinician.</span>
+        </div>
+      </main>
+    </div>
   )
 }
