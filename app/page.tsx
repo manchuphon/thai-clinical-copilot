@@ -102,7 +102,7 @@ export default function UploadPage() {
                 <Upload className="h-5 w-5 text-primary" />
                 <CardTitle>Audio Upload</CardTitle>
               </div>
-              <CardDescription>อัปโหลดไฟล์เสียงการสนทนา MP3, WAV หรือ M4A</CardDescription>
+              <CardDescription>อัปโหลดไฟล์เสียงการสนทนา MP3</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <label
