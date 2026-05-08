@@ -1,0 +1,32 @@
+{
+  "dialect_map": {
+    "เจ็บแอว":     { "en": "lower back pain",        "icd10": "M54.5" },
+    "ปวดแอว":      { "en": "lower back pain",        "icd10": "M54.5" },
+    "ไข้หัวโก๋":   { "en": "dengue fever",           "icd10": "A90"   },
+    "มึนหัว":      { "en": "dizziness",              "icd10": "R42"   },
+    "หัวหมุน":     { "en": "vertigo",                "icd10": "R42"   },
+    "เป็นลม":      { "en": "syncope",                "icd10": "R55"   },
+    "ท้องขึ้น":    { "en": "abdominal bloating",     "icd10": "R14"   },
+    "แน่นหน้าอก":  { "en": "chest tightness",        "icd10": "R07.3" },
+    "ปวดหัวตึบๆ":  { "en": "throbbing headache",     "icd10": "R51"   },
+    "ตาลาย":       { "en": "visual disturbance",     "icd10": "H53"   },
+    "ปัสสาวะแสบ":  { "en": "dysuria",                "icd10": "R30.0" },
+    "ไข้สูง":      { "en": "high fever",             "icd10": "R50.9" },
+    "ไอมาก":       { "en": "cough",                  "icd10": "R05"   },
+    "หายใจไม่ออก": { "en": "dyspnea",                "icd10": "R06.0" },
+    "ขาบวม":       { "en": "leg edema",              "icd10": "R60.0" }
+  },
+  "code_switch_map": {
+    "para":        "Paracetamol",
+    "paracetamol": "Paracetamol",
+    "metformin":   "Metformin",
+    "amlodipine":  "Amlodipine",
+    "PRN":         "as needed",
+    "NPO":         "nothing by mouth",
+    "DTX":         "blood glucose check",
+    "ortho":       "orthopedics",
+    "cardio":      "cardiology",
+    "neuro":       "neurology",
+    "refer":       "referral to"
+  }
+}
