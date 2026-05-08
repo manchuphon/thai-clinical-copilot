@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
 
     // ถ้าไม่มี role tags ให้เพิ่ม default
     if (!transcript.includes("Doctor:") && !transcript.includes("Patient:")) {
-      transcript = "Doctor: [เริ่มบทสนทนา]\n" + transcript
+      transcript = transcript
     }
 
     return NextResponse.json({ transcript })
